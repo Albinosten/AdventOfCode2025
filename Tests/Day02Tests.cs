@@ -35,31 +35,20 @@ public class Day02Tests
     }
 
     [TestMethod]
-    [DataRow(123123, 3, 1001)]
-    [DataRow(12121212, 2,1010101)]
-    public void GetBitmapTest(int number, int repeatingCount, int expected)
-    {
-        var puzzle = new Day02();
-        Assert.AreEqual(expected, puzzle.GetBitMap(number.ToString().Length, repeatingCount));
-    }
-    [TestMethod]
-    [DataRow(123123, 6)]
-    [DataRow(12121212, 8)]
-    [DataRow(3, 1)]
-    public void DigitCount(int number, int expected)
-    {
-        var puzzle = new Day02();
-        Assert.AreEqual(expected, puzzle.DigitCount(number));
-    }
-    [TestMethod]
-    [DataRow(123456,3, 456)]
-    [DataRow(12121212, 5, 21212)]
+    [DataRow("121212", 2, true)]
+    [DataRow("121212", 2, true)]
+    [DataRow("123123", 3, true)]
+    [DataRow("123123", 2, false)]
+    [DataRow("1011", 2, false)]
+    [DataRow("1188511880", 4,false)]
+    [DataRow("1001001", 3,false)]
+    //1188511880
+    //1001001,3,false
     
-    public void GetPattern(int number, int count, int expected)
+    public void StringCompare(string number, int patternSize, bool result)
     {
         var puzzle = new Day02();
-        Assert.AreEqual(expected, puzzle.GetPattern(number,count));
+        Assert.AreEqual(result, puzzle.StringCompare(number, patternSize));
     }
-
     
 }

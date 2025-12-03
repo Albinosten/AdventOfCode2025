@@ -21,6 +21,9 @@ namespace AdventOfCode2025
             Edit: I want to point out that this was not the official time for my progam. 
             This was with just for timing different solutions. Official time was 1.6s.
             Now the time is 0.38s for both parts. 
+
+            Edit2: I changed from a confusing math approach into something easier...
+            New time is 0.09s for both parts.
         */
         public long First(IList<string> input)
         {
@@ -49,10 +52,10 @@ namespace AdventOfCode2025
                 ;
             Parallel.ForEach(ranges, range => 
             {
-                var r = ParseInput(input);
+                var r = ParseInput(range);
                 for(long number = r.start; number <= r.end; number++)
                 {
-                    if(CheckWithMath(number))
+                    if(Validate(number))
                     {
                         result.Add(number);
                     }
@@ -68,7 +71,6 @@ namespace AdventOfCode2025
             {
                 if (number % 10 != lastDigit)
                 {
-                    
                     return false;
                 }
 
@@ -76,84 +78,20 @@ namespace AdventOfCode2025
             }
 
             return true;
-        } 
-        public int DigitCount(long number)
-        {
-            var count = 1;
-            while (number > 0)
-            {
-                if (number / 10 == 0)
-                {
-                    return count;
-                }
-
-                number /= 10;
-                count++;
-            }
-
-            return count;
         }
-        public long GetPattern(long number, int i)
-        {
-            long result = 0;
-            var x = 0;
-            while (i > 0)
-            {
-                var lastDidgit = number % 10;
-                if(i == 0)
-                {
-                    return result;
-                }
-                i--;
-                result += lastDidgit * (long)Math.Pow(10,x);
-                x++;
-                number /= 10;
-            }
-
-            return result;
-        }
-        public bool CheckWithMath(long number)
+        public bool Validate(long number)
         {
             if(number / 10 == 0){return false;}
             if(AllDigitsAreEqual(number)){return true;}
-            var digitCount =  DigitCount(number);
-            for(int i = 2; i <= digitCount/2; i++)
+            var numberString = number.ToString();
+            for(int i = 2; i <= numberString.Length/2; i++)
             {
-                var pattern = GetPattern(number, i);
-                if(Validate(number,pattern,i,digitCount))
+                if(StringCompare(numberString,i))
                 {
                     return true;
                 }
             }
             return false;
-        }
-        bool Validate(long number, long pattern, int i,int originalNumberLength)
-        {
-            return pattern != 0
-                && (decimal)number / pattern == GetBitMap(originalNumberLength, i)
-                ;
-        }
-        public long GetBitMap(int originalNumberLength, int checkSumLength)
-        {
-            var bitmap = 0;
-            var repeatingCount = originalNumberLength/checkSumLength;
-            for(int i = 0; i < repeatingCount-1;i++)
-            {
-                for(int j = 0; j < checkSumLength;j++)
-                {
-                    if(j % checkSumLength == 0)
-                    {
-                        bitmap += 1;
-                    }
-                    else
-                    {
-                        bitmap *= 10;
-                    }
-                }
-                bitmap *= 10;
-            }
-            bitmap += 1;
-            return bitmap;
         }
         public bool StringCompare(string number)
         {
@@ -166,6 +104,22 @@ namespace AdventOfCode2025
             for(int i = 0; i < halfLength;i++)
             {
                 if(number[i] != number[i+halfLength])
+                {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        public bool StringCompare(string number, int patternSize)
+        {   
+            if(number.Length % patternSize != 0 ){return false;}
+            for(int i = 0; i < number.Length - patternSize; i++)
+            {
+                var firstValue = number[i];
+                var secondValue = number[i + patternSize];
+                if(firstValue != secondValue)
                 {
                     return false;
                 }
