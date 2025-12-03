@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace AdventOfCode2025
 {
     public class Day02
@@ -15,6 +17,10 @@ namespace AdventOfCode2025
             part2 = 2m 19s
 
             Conclution: Regex looks cooler but it might not always be the fastest.
+
+            Edit: I want to point out that this was not the official time for my progam. 
+            This was with just for timing different solutions. Official time was 1.6s.
+            Now the time is 0.38s for both parts. 
         */
         public long First(IList<string> input)
         {
@@ -34,22 +40,120 @@ namespace AdventOfCode2025
             
             return result;
         }
-        public long Second(IList<string> input)
+        public long Second(string input)
         {
-            var ranges = this.ParseInput(input);
-            var result = 0L;
-            foreach(var range in ranges)
+            var result = new ConcurrentBag<long>();
+            var ranges = input
+                .Split(',')
+                .ToList()
+                ;
+            Parallel.ForEach(ranges, range => 
             {
-                for(long number = range.start; number <= range.end; number++)
+                var r = ParseInput(input);
+                for(long number = r.start; number <= r.end; number++)
                 {
-                    if(IsInvalid(number)) // Regex.IsMatch(number.ToString(), "^(.+)\\1+$")
+                    if(CheckWithMath(number))
                     {
-                        result += number;
+                        result.Add(number);
                     }
                 }
-            }
+            });
             
+            return result.Sum();
+        }
+        public bool AllDigitsAreEqual(long number)
+        {
+            long lastDigit = number % 10;
+            while (number > 0)
+            {
+                if (number % 10 != lastDigit)
+                {
+                    
+                    return false;
+                }
+
+                number /= 10;
+            }
+
+            return true;
+        } 
+        public int DigitCount(long number)
+        {
+            var count = 1;
+            while (number > 0)
+            {
+                if (number / 10 == 0)
+                {
+                    return count;
+                }
+
+                number /= 10;
+                count++;
+            }
+
+            return count;
+        }
+        public long GetPattern(long number, int i)
+        {
+            long result = 0;
+            var x = 0;
+            while (i > 0)
+            {
+                var lastDidgit = number % 10;
+                if(i == 0)
+                {
+                    return result;
+                }
+                i--;
+                result += lastDidgit * (long)Math.Pow(10,x);
+                x++;
+                number /= 10;
+            }
+
             return result;
+        }
+        public bool CheckWithMath(long number)
+        {
+            if(number / 10 == 0){return false;}
+            if(AllDigitsAreEqual(number)){return true;}
+            var digitCount =  DigitCount(number);
+            for(int i = 2; i <= digitCount/2; i++)
+            {
+                var pattern = GetPattern(number, i);
+                if(Validate(number,pattern,i,digitCount))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        bool Validate(long number, long pattern, int i,int originalNumberLength)
+        {
+            return pattern != 0
+                && (decimal)number / pattern == GetBitMap(originalNumberLength, i)
+                ;
+        }
+        public long GetBitMap(int originalNumberLength, int checkSumLength)
+        {
+            var bitmap = 0;
+            var repeatingCount = originalNumberLength/checkSumLength;
+            for(int i = 0; i < repeatingCount-1;i++)
+            {
+                for(int j = 0; j < checkSumLength;j++)
+                {
+                    if(j % checkSumLength == 0)
+                    {
+                        bitmap += 1;
+                    }
+                    else
+                    {
+                        bitmap *= 10;
+                    }
+                }
+                bitmap *= 10;
+            }
+            bitmap += 1;
+            return bitmap;
         }
         public bool StringCompare(string number)
         {
@@ -70,35 +174,10 @@ namespace AdventOfCode2025
             return true;
         }
 
-        public bool AllAreEqual(IEnumerable<char[]> input)
+        public (long start, long end) ParseInput(string input)
         {
-            char[]? first = null;
-            foreach(var row in input)
-            {
-                first = first ?? row;
-                if(row.Length != first.Length){return false;}       
-                for(int i = 0; i < row.Length; i++)
-                {
-                    if(row[i] != first[i])
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-        
-        public bool IsInvalid(long number)
-        {
-            var numberString = number.ToString();
-            for(int i = 1; i <= numberString.Length / 2; i++)
-            {
-                if(AllAreEqual(numberString.Chunk(i)))
-                {
-                    return true;    
-                }
-            }
-            return false;
+            var numbers = input.Split('-');
+            return (long.Parse(numbers[0]), long.Parse(numbers[1]));
         }
         public IList<(long start, long end)> ParseInput(IList<string> input)
         {
@@ -108,8 +187,7 @@ namespace AdventOfCode2025
 			{
                 foreach(var range in line.Split(','))
                 {
-                    var numbers = range.Split('-');
-                    values.Add((long.Parse(numbers[0]), long.Parse(numbers[1])));
+                    values.Add(ParseInput(range));
                 }
 			}
             return values;

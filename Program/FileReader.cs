@@ -1,4 +1,7 @@
-public class FileReader
+
+namespace AdventOfCode2025
+{
+    public class FileReader
 {
     public static IList<string> GetInput(bool IsExample, object puzzle)
     {
@@ -13,4 +16,5 @@ public class FileReader
     {
         return Path.GetDirectoryName(path) ?? "";
     }
+}
 }
