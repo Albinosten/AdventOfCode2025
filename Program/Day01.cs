@@ -16,7 +16,6 @@ namespace AdventOfCode2025
             }
             return result;
         }
-
         public int Second(IList<string> input)
         {
             var dialStartValue = 50;
