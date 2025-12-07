@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 namespace AdventOfCode2025
 {
     public class Day03
@@ -25,19 +23,16 @@ namespace AdventOfCode2025
         }
         public char[] GetBiggest(string input, int count)
         {
-            char biggest = input[0];
             int indexOfBiggest = 0;
             for(int i = 0; i <= input.Length - count; i++)
             {
-                if(input[i]>biggest)
+                if(input[i]>input[indexOfBiggest])
                 {
-                    biggest=input[i];
                     indexOfBiggest = i;
                 }
             }
-            if(count == 1){return [biggest];}
-            return [biggest, ..GetBiggest(input[(indexOfBiggest + 1)..], count-1)];
-
+            if(count == 1){return [input[indexOfBiggest]];}
+            return [input[indexOfBiggest], ..GetBiggest(input[(indexOfBiggest + 1)..], count-1)];
         }
     }
 }

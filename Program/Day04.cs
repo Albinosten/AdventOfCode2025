@@ -27,7 +27,6 @@ namespace AdventOfCode2025
 
 		public int Second(IList<string> input)
 		{
-
 			var result = 0;
 			var warehouse = this.ParseInput(input);
 			var anyWasRemoved = false;
