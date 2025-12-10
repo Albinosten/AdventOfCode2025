@@ -1,14 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Schema;
-
 namespace AdventOfCode2025
 {
 	internal class Helper
 	{
+		public static List<(int y, int x)> GetAdjacent((int x, int y) p) => GetAdjacent(p.x, p.y);
 		public static List<(int y, int x)> GetAdjacent(int x, int y)
 		{
 			return new List<(int y, int x)>
@@ -25,6 +19,16 @@ namespace AdventOfCode2025
 		public static bool InBounds(int x, int y, int xMax, int yMax)
 		{
 			return x >= 0 && y >= 0 && x < xMax && y < yMax;
+		}
+	}
+	internal static class Extentions
+	{
+		public static void AddRange<T>(this HashSet<T> set, IEnumerable<T> values)
+		{
+			foreach (T t in values) 
+			{
+				set.Add(t);
+			}
 		}
 	}
 }
