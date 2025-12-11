@@ -1,5 +1,28 @@
 namespace AdventOfCode2025
 {
+	public class SingleValueHolder
+	{
+		private int _value;
+
+		public SingleValueHolder(int initialValue)
+		{
+			_value = initialValue;
+		}
+
+		// Atomic replacement
+		public void Set(int newValue)
+		{
+			var min = Math.Min(newValue, Get());
+			Interlocked.Exchange(ref _value, min);
+		}
+
+		// Atomic read
+		public int Get()
+		{
+			return Volatile.Read(ref _value);
+		}
+	}
+
 	internal class Helper
 	{
 		public static List<(int y, int x)> GetAdjacent((int x, int y) p) => GetAdjacent(p.x, p.y);
@@ -20,6 +43,7 @@ namespace AdventOfCode2025
 		{
 			return x >= 0 && y >= 0 && x < xMax && y < yMax;
 		}
+		
 	}
 	internal static class Extentions
 	{
