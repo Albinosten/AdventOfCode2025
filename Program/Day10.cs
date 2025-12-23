@@ -150,6 +150,53 @@ namespace AdventOfCode2025
 			movesDictionary.Add(joltIndex, moves);
 			return moves;
 		}
+
+		public static string GetHash(List<int> ints)
+		{
+			return string.Join(",", ints
+				// .Distinct()
+				// .OrderBy(x => x)
+				// .ToList()
+				);
+		}
+		public static (List<int[]> buttons, int joltage) FilterMovesExcludePreviousJoltagesMoves(
+			Dictionary<int, List<int[]>> movesDictionary
+		, List<List<int>> allButtons
+		, List<int> usedJoltage
+		, Dictionary<string, int> nextJoltage
+		)
+		{
+			var joltHash = GetHash(usedJoltage);
+			if (nextJoltage.TryGetValue(joltHash, out var nj) 
+				&& movesDictionary.ContainsKey(nj))
+			{
+				return (movesDictionary[nj], nj);
+			}
+			
+				
+			//(0,1,2) (1,2) (2,3)
+			var unusedButtons = allButtons.
+				Where(x => !x.Any(c => usedJoltage.Contains(c)))
+				.ToList();
+
+			var joltIndex = unusedButtons
+				.SelectMany(x => x)
+				.GroupBy(x => x)
+				.OrderBy(x => x.Count())
+				.FirstOrDefault()?.Key 
+				?? -1
+				;
+			
+			var moves = unusedButtons
+				.Where(x => x.Any(y => y == joltIndex))
+				.OrderByDescending(x => x.Count)
+				.Select(x => x.ToArray())
+				.ToList();
+			movesDictionary.Add(joltIndex, moves);
+			nextJoltage.Add(joltHash, joltIndex);
+			return (moves,joltIndex);
+			
+		}
 		public Machine Clone()
 		{
 			var clone = new Machine(this.joltage.Length)
@@ -232,9 +279,10 @@ namespace AdventOfCode2025
 				.ToList()
 				;
 			var concurrentBag = new ConcurrentBag<long>();
-
+			// machines.Reverse();
+			// foreach(var machine in machines)
 			Parallel.ForEach(machines
-			, parallelOptions: new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2) }
+			, parallelOptions: new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount) }
 			, machine =>
 			{
 				var t = new Stopwatch();
@@ -243,12 +291,17 @@ namespace AdventOfCode2025
 				if (ReadSaveResult && !string.IsNullOrEmpty(result))
 				{
 					var count = int.Parse(result);
+					Console.WriteLine($"ID: {machine.Id} result: {count}");
+					if(count == int.MaxValue)
+					{
+						
+					}
 					concurrentBag.Add(count);
 				}
 				else
 				{
 					Console.WriteLine($"Started with: {machine.Id}");
-					var count = (int)this.RunBoth(machine);
+					var count = (int)this.RunBruitForceRecursiveMinJoltage(machine, new SingleValueHolder(int.MaxValue), new CancellationTokenSource());
 					t.Stop();
 					concurrentBag.Add(count);
 					this.PrintMachineInfoAndTime(t, machine, count);
@@ -260,167 +313,25 @@ namespace AdventOfCode2025
 						FileReader.SaveResult(isExample, Part.Two, this, machine.Id, count.ToString());
 					}
 				}
-			});
+			}
+			);
 
 			return concurrentBag.Sum();
 		}
 
-		public long RunBruitForceRecursive(Machine machine, SingleValueHolder svh, CancellationTokenSource cancellationToken)
+		
+		public long RunBruitForceRecursiveMinJoltage(Machine machine, SingleValueHolder svh, CancellationTokenSource cancellationToken)
 		{
-			Thread.Sleep(25);
 			var movesDictionary = new Dictionary<int, List<int[]>>();
 			int minScore = 10000;
-			return this.BruitForceRecursive(machine
+			return this.BruitForceRecursiveMinJoltage(machine
 			, 0
 			, 0
 			, 0
 			, machine.Buttons
-			, 0
+			, new List<int>()
 			, movesDictionary
-			, svh
-			, machine.ExpectedJoltage.ToArray()
-			, cancellationToken
-			)
-			* machine.GCD;
-		}
-
-		public int BruitForceRecursive(Machine m
-		, int buttonPressedForJoltage
-		, int score
-		, int depth
-		, List<List<int>> originalButtons
-		, int joltage
-		, Dictionary<int, List<int[]>> movesDictionary
-		, SingleValueHolder svh
-		, int[] expectedJoltage
-		, CancellationTokenSource cancellationToken
-		)
-		{
-			cancellationToken.Token.ThrowIfCancellationRequested();
-			var minScore = svh.Get();
-			if (score > minScore)
-			{
-				return score;
-			}
-			var filteredButtons = Machine.FilterMovesExcludePreviousJoltageMoves(movesDictionary, originalButtons, joltage);
-			var value = expectedJoltage[joltage] - m.joltage[joltage];
-			for (int i = 0; i <= expectedJoltage[joltage] - buttonPressedForJoltage; i++)
-			{
-				if (i == value)
-				{
-					var newButtonPressedForJoltage = score;
-					if (filteredButtons.Count > 0)
-					{
-						newButtonPressedForJoltage += i;
-						m.ApplyMultipleMove(i, filteredButtons[depth]);
-					}
-
-					/*sending joltage+1 here since the forloop makes sure to not overdo current joltage*/
-					/*And FilterMovesExcludePreviousJoltageMoves makes sure no previous joltages are changed*/
-					var joltageOverloaded = m.joltageOverload(expectedJoltage, joltage + 1);
-					if (!joltageOverloaded && joltage < expectedJoltage.Length - 1)
-					{
-						if(BruitForceRecursive(m.SoftClone(false), 0, newButtonPressedForJoltage, 0, originalButtons
-							, joltage + 1
-							, movesDictionary
-							//, ref minScore
-							, svh
-							, expectedJoltage
-							, cancellationToken
-							)>=minScore)
-						{
-							break;
-						}
-					}
-					else if (m.joltageIsComplete(expectedJoltage, expectedJoltage.Length))
-					{
-						minScore = score + i;
-						svh.Set(minScore);
-						return minScore;
-					}
-					else{ break; }
-				}
-				else if (depth < filteredButtons.Count - 1)
-				{
-					var newM = m.SoftClone(false);
-					newM.ApplyMultipleMove(i, filteredButtons[depth]);
-
-					if (newM.joltageOverload(expectedJoltage,joltage+1)
-						|| BruitForceRecursive(newM, buttonPressedForJoltage + i
-							, score + i
-							, depth + 1
-							, originalButtons
-							, joltage
-							, movesDictionary
-							//, ref minScore
-							, svh
-							, expectedJoltage
-							, cancellationToken
-							) > minScore)
-					{
-						break;
-					}
-				}
-				else if (depth == filteredButtons.Count)
-				{
-					i = 1000;
-
-				}
-			}
-			return svh.Get();
-		}
-
-		public long RunBoth(Machine m)
-		{
-			var minValue = new SingleValueHolder(int.MaxValue);
-			var cancellationToken = new CancellationTokenSource();
-			var methods = new[]
-			{
-				() => ("forward", RunBruitForceRecursive(m.Clone(), minValue, cancellationToken)),
-				() => ("backwards", RunBruitForceRecursiveBackwards(m.Clone(), minValue, cancellationToken)),
-			};
-
-			var result = new SingleValueHolder(int.MaxValue);
-			try
-			{
-
-				Parallel.ForEach(methods
-				, parallelOptions: new ParallelOptions { CancellationToken = cancellationToken.Token }
-				, (method ,state)=>
-				{
-					var r = method();
-					try
-					{
-						result.Set((int)r.Item2);
-					}
-					catch { }
-					if(!state.IsStopped)
-					{
-						Console.WriteLine("Winner was: " + r.Item1);
-					}
-					cancellationToken.Cancel();
-
-				});
-			}
-			catch (Exception ex) 
-			{
-
-			}
-			
-			return result.Get();
-		}
-
-		public long RunBruitForceRecursiveBackwards(Machine machine, SingleValueHolder svh, CancellationTokenSource cancellationToken)
-		{
-			var movesDictionary = new Dictionary<int, List<int[]>>();
-			int minScore = 10000;
-			return this.BruitForceRecursiveBackwards(machine
-			, 0
-			, 0
-			, 0
-			, machine.Buttons
-			, machine.joltage.Length-1
-			, movesDictionary
+			, new Dictionary<string, int>()
 			, svh
 			, machine.ExpectedJoltage.ToArray()
 			, cancellationToken
@@ -429,13 +340,14 @@ namespace AdventOfCode2025
 			;
 		}
 
-		public int BruitForceRecursiveBackwards(Machine m
+		public int BruitForceRecursiveMinJoltage(Machine m
 		, int buttonPressedForJoltage
 		, int score
 		, int depth
 		, List<List<int>> originalButtons
-		, int joltage
+		, List<int> usedJoltages
 		, Dictionary<int, List<int[]>> movesDictionary
+		, Dictionary<string, int> previousJoltDictionary
 		, SingleValueHolder svh
 		, int[] expectedJoltage
 		, CancellationTokenSource cancellationToken
@@ -447,32 +359,41 @@ namespace AdventOfCode2025
 			{
 				return score;
 			}
-			var filteredButtons = Machine.FilterMovesExcludePreviousJoltageMovesBackwards(movesDictionary, originalButtons, joltage);
-			var value = expectedJoltage[joltage] - m.joltage[joltage];
-			for (int i = 0; i <= expectedJoltage[joltage] - buttonPressedForJoltage; i++)
+			var filteredButtons = Machine.FilterMovesExcludePreviousJoltagesMoves(movesDictionary
+				, originalButtons
+				, usedJoltages
+				, previousJoltDictionary
+				);
+			if(filteredButtons.joltage == -1)
+			{
+				return score;
+			}
+			var value = expectedJoltage[filteredButtons.joltage] - m.joltage[filteredButtons.joltage];
+			for (int i = 0; i <= expectedJoltage[filteredButtons.joltage] - buttonPressedForJoltage; i++)
 			{
 				if (i == value)
 				{
 					var newM = m.SoftClone(false);
 	
 					var newButtonPressedForJoltage = score;
-					if (filteredButtons.Count > 0)
+					if (filteredButtons.Item1.Count > 0)
 					{
 						newButtonPressedForJoltage += i;
-						newM.ApplyMultipleMove(i, filteredButtons[depth]);
+						newM.ApplyMultipleMove(i, filteredButtons.Item1[depth]);
 					}
 
 					/*sending joltage-1 here since the forloop makes sure to not overdo current joltage*/
 					/*And FilterMovesExcludePreviousJoltageMoves makes sure no previous joltages are changed*/
 					var joltageOverloaded = newM.joltageOverload(expectedJoltage, 0);
-					if (!joltageOverloaded && joltage > 0)
+					if (!joltageOverloaded)
 					{
-						if (BruitForceRecursiveBackwards(newM.SoftClone(false), 0
+						if (BruitForceRecursiveMinJoltage(newM.SoftClone(false), 0
 							, newButtonPressedForJoltage
 							, 0
 							, originalButtons
-							, joltage - 1
+							, [filteredButtons.joltage, ..usedJoltages]
 							, movesDictionary
+							, previousJoltDictionary
 							, svh
 							, expectedJoltage
 							, cancellationToken
@@ -481,7 +402,7 @@ namespace AdventOfCode2025
 							break;
 						}
 					}
-					else if (newM.joltageIsComplete(expectedJoltage, expectedJoltage.Length))
+					 if (newM.joltageIsComplete(expectedJoltage, expectedJoltage.Length))
 					{
 						minScore = score + i;
 						svh.Set(minScore);
@@ -490,18 +411,19 @@ namespace AdventOfCode2025
 					else { break; }
 				}
 				else
-				if (depth < filteredButtons.Count - 1)
+				if (depth < filteredButtons.Item1.Count - 1)
 				{
 					var newM = m.SoftClone(false);
-					newM.ApplyMultipleMove(i, filteredButtons[depth]);
+					newM.ApplyMultipleMove(i, filteredButtons.Item1[depth]);
 
 					if (newM.joltageOverload(expectedJoltage, 0)
-						|| BruitForceRecursiveBackwards(newM, buttonPressedForJoltage + i
+						|| BruitForceRecursiveMinJoltage(newM, buttonPressedForJoltage + i
 							, score + i
 							, depth + 1
 							, originalButtons
-							, joltage
+							, [..usedJoltages]
 							, movesDictionary
+							, previousJoltDictionary
 							, svh
 							, expectedJoltage
 							, cancellationToken
@@ -510,7 +432,7 @@ namespace AdventOfCode2025
 						break;
 					}
 				}
-				else if (depth == filteredButtons.Count)
+				else if (depth == filteredButtons.Item1.Count)
 				{
 					i = 1000;
 
@@ -598,7 +520,7 @@ namespace AdventOfCode2025
 					var savedResult = int.Parse(resultFromfile);
 					var t = new Stopwatch();
 					t.Start();
-					var newResult = this.RunBruitForceRecursiveBackwards(machine, new SingleValueHolder(int.MaxValue), new CancellationTokenSource());
+					var newResult = this.RunBruitForceRecursiveMinJoltage(machine, new SingleValueHolder(int.MaxValue), new CancellationTokenSource());
 					
 					if (newResult != savedResult)
 					{
