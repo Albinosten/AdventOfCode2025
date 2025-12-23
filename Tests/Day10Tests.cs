@@ -1,6 +1,4 @@
 ﻿using AdventOfCode2025;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Program;
 using System.Data;
 
 [TestClass]
@@ -18,11 +16,12 @@ public class Day10Tests
 
 	[TestMethod]
 	[DataRow(true, 33)]
-	//[DataRow(false, 0)]
+	//[DataRow(false, 18369)]
 	public void Day10_2(bool isExample, long expected)
 	{
 		var puzzle = new Day10() { ReadSaveResult = false};
-		Assert.AreEqual(expected, puzzle.Second(FileReader.GetInput(isExample, puzzle),isExample));
+		var result = puzzle.Second(FileReader.GetInput(isExample, puzzle), isExample);
+		Assert.AreEqual(expected, result);
 	}
 
 
@@ -30,7 +29,8 @@ public class Day10Tests
 	public void Day10_Clone()
 	{
 		var puzzle = new Day10();
-		var machine = puzzle.ParseInput(["[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}"], false)[0];
+		var machine = puzzle.
+		ParseInput(["[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}"])[0];
 		var machineClone = machine.Clone();
 
 		if (machineClone.Indicators.Count != machine.Indicators.Count)
@@ -66,7 +66,7 @@ public class Day10Tests
 		/*
 	[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
 	The fewest presses required to correctly configure it is 2; one way to do this is by pressing buttons (0,3,4) and (0,1,2,4,5) once each.*/
-		var machine = new Day10().ParseInput(["[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}"],false)[0];
+		var machine = new Day10().ParseInput(["[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}"])[0];
 		machine.ApplyMove(1);
 		Assert.IsFalse(machine.IsComplete());
 		machine.ApplyMove(2);
@@ -82,7 +82,7 @@ public class Day10Tests
 		 */
 
 		var puzzle = new Day10();
-		var machine = puzzle.ParseInput(["[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}"], false)[0];
+		var machine = puzzle.ParseInput(["[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}"])[0];
 		Assert.IsFalse(machine.IsComplete());
 		machine.ApplyMove(0);
 		Assert.IsFalse(machine.IsComplete());
@@ -91,7 +91,7 @@ public class Day10Tests
 		machine.ApplyMove(2);
 		Assert.IsTrue(machine.IsComplete());
 
-		var m2 = puzzle.ParseInput(["[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}"],false)[0];
+		var m2 = puzzle.ParseInput(["[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}"])[0];
 		Assert.IsFalse(m2.IsComplete());
 		m2.ApplyMove(1);
 		Assert.IsFalse(m2.IsComplete());
@@ -104,7 +104,7 @@ public class Day10Tests
 
 		//The second machine can be configured with as few as 3 button presses:
 		//One way to achieve this is by pressing the last three buttons ((0,4), (0,1,2), and (1,2,3,4)) once each.
-		var m3 = puzzle.ParseInput(["[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}"],false)[0];
+		var m3 = puzzle.ParseInput(["[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}"])[0];
 		Assert.IsFalse(m3.IsComplete());
 		m3.ApplyMove(2);
 		Assert.IsFalse(m3.IsComplete());
@@ -115,24 +115,70 @@ public class Day10Tests
 	}
 
 	[TestMethod]
-	[DataRow("[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}", 10)]
-	[DataRow("[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}", 12)]
-	[DataRow("[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}", 11)]
-	//[DataRow("[#.#####] (2,3,4,6) (2,5) (1,3,4,5,6) (1,2,5,6) (0,5,6) (0,1,2,3,4,6) (1,2,3,5,6) (1,3,4,6) (0,2,3,4,5,6) {23,42,62,53,35,62,74}", 74)]
-	//[DataRow("[..#....#..] (0,4,5,7,8) (7,8) (1,3,5,6,9) (0,2,3,4,7,8,9) (1,4,6,7) (0,1,4,6,7,8,9) (3,4,7,9) (0,2,3,4,5,6,8,9) (2,5,7,9) (1,6,7,8,9) (0,2,3,5,6,7,8,9) (0,1,3,5,6,8,9) (5,8,9) {248,48,228,265,250,83,75,269,260,287}", 11)]
-	public void Day10_2_Test(string input, int count)
+	public void MyTestMethod()
 	{
-		var puzzle = new Day10();
-		Assert.AreEqual(count, puzzle.Second([input],true));
+		var array = new int[] { 1, 2, 3, 4, 5 };
+		var list = array.ToList();
+
+		Assert.AreEqual(array.Length, list.Count);
 	}
 
 	[TestMethod]
-	public void PriorityQueue()
+	[DataRow("[.#] (0) (0,1) {8,4}", 8)]
+	[DataRow("[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}", 10)]
+	[DataRow("[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}", 12)]
+	[DataRow("[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}", 11)]
+	[DataRow("[#.#.##] (0,4,5) (0,2,3,4,5) (0,1,2,4) (0,3,4,5) (0,1,5) (4) (1,5) {60,40,28,30,56,67}", 82)]
+	[DataRow("[#.#####] (2,3,4,6) (2,5) (1,3,4,5,6) (1,2,5,6) (0,5,6) (0,1,2,3,4,6) (1,2,3,5,6) (1,3,4,6) (0,2,3,4,5,6) {23,42,62,53,35,62,74}", 74)]
+	//[DataRow("[.##.##..##] (1,2,4,5,7,8,9) (0,2,3,6,8,9) (0,2,5,9) (0,2,3,4) (0,1,2,4,5,6,7,8,9) (1,2,5,6) (7) (5,7,9) (1,4,5,6,8) (0,4,7,8) (2,3,4,9) (0,1,3,4,5,7,8,9) {63,48,62,31,52,81,57,60,65,82}", 115)]
+	//[DataRow("[..#....#..] (0,4,5,7,8) (7,8) (1,3,5,6,9) (0,2,3,4,7,8,9) (1,4,6,7) (0,1,4,6,7,8,9) (3,4,7,9) (0,2,3,4,5,6,8,9) (2,5,7,9) (1,6,7,8,9) (0,2,3,5,6,7,8,9) (0,1,3,5,6,8,9) (5,8,9) {248,48,228,265,250,83,75,269,260,287}", 11)]
+	public void Day10_2_TestBruitForceRecursive(string input, int result)
 	{
-		var q = new PriorityQueue<string, int>();
-		q.Enqueue("låg prio", 0);
-		q.Enqueue("högprio", 100);
-		var b = q.Dequeue();
+		var puzzle = new Day10();
+		var machine = puzzle.ParseInput([input])[0];
+		var movesDictionary = new Dictionary<int, List<List<int>>>();
+		long minScore = int.MaxValue;
+		var count = (int)puzzle.RunBruitForceRecursive(machine, new SingleValueHolder(int.MaxValue), new CancellationTokenSource());
+		Assert.AreEqual(result, count);
+	}
 
+	[TestMethod]
+	[DataRow("[.#] (0) (0,1) {2,1}", 2)]
+	[DataRow("[.#] (0) (0,1) {8,4}", 8)]
+	[DataRow("[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}", 10)]
+	[DataRow("[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}", 12)]
+	[DataRow("[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}", 11)]
+	[DataRow("[#.#.##] (0,4,5) (0,2,3,4,5) (0,1,2,4) (0,3,4,5) (0,1,5) (4) (1,5) {60,40,28,30,56,67}", 82)]
+	[DataRow("[#.#####] (2,3,4,6) (2,5) (1,3,4,5,6) (1,2,5,6) (0,5,6) (0,1,2,3,4,6) (1,2,3,5,6) (1,3,4,6) (0,2,3,4,5,6) {23,42,62,53,35,62,74}", 74)]
+	//[DataRow("[#.#..#..#.] (0,1,2,6,7) (0,1,2,3,5,8) (0,4,6) (0,3,4,5,8) (0,3,4,5,6,7,8) (0,2,4,6,7,8,9) (0,3,4,5,6,7,8,9) (7,8) (4,6,8) (2,7,9) (5,8) (0,2,3,4,6,8,9) (0,1,3,4,5,6,9) {118,48,64,72,90,74,95,64,92,62}", 74)]
+	//[DataRow("[.##.##..##] (1,2,4,5,7,8,9) (0,2,3,6,8,9) (0,2,5,9) (0,2,3,4) (0,1,2,4,5,6,7,8,9) (1,2,5,6) (7) (5,7,9) (1,4,5,6,8) (0,4,7,8) (2,3,4,9) (0,1,3,4,5,7,8,9) {63,48,62,31,52,81,57,60,65,82}", 115)]
+	//[DataRow("[..#....#..] (0,4,5,7,8) (7,8) (1,3,5,6,9) (0,2,3,4,7,8,9) (1,4,6,7) (0,1,4,6,7,8,9) (3,4,7,9) (0,2,3,4,5,6,8,9) (2,5,7,9) (1,6,7,8,9) (0,2,3,5,6,7,8,9) (0,1,3,5,6,8,9) (5,8,9) {248,48,228,265,250,83,75,269,260,287}", 11)]
+	public void Day10_2_TestBruitForceRecursiveBackwards(string input, int result)
+	{
+		var puzzle = new Day10();
+		var machine = puzzle.ParseInput([input])[0];
+		var movesDictionary = new Dictionary<int, List<List<int>>>();
+		long minScore = int.MaxValue;
+		var count = (int)puzzle.RunBruitForceRecursiveBackwards(machine, new SingleValueHolder(int.MaxValue), new CancellationTokenSource());
+		Assert.AreEqual(result, count);
+	}
+
+	[TestMethod]
+	[DataRow("[.#] (0) (0,1) {8,4}", 8)]
+	[DataRow("[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}", 10)]
+	[DataRow("[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}", 12)]
+	[DataRow("[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}", 11)]
+	[DataRow("[#.#.##] (0,4,5) (0,2,3,4,5) (0,1,2,4) (0,3,4,5) (0,1,5) (4) (1,5) {60,40,28,30,56,67}", 82)]
+	[DataRow("[#.#####] (2,3,4,6) (2,5) (1,3,4,5,6) (1,2,5,6) (0,5,6) (0,1,2,3,4,6) (1,2,3,5,6) (1,3,4,6) (0,2,3,4,5,6) {23,42,62,53,35,62,74}", 74)]
+	[DataRow("[.##.##..##] (1,2,4,5,7,8,9) (0,2,3,6,8,9) (0,2,5,9) (0,2,3,4) (0,1,2,4,5,6,7,8,9) (1,2,5,6) (7) (5,7,9) (1,4,5,6,8) (0,4,7,8) (2,3,4,9) (0,1,3,4,5,7,8,9) {63,48,62,31,52,81,57,60,65,82}", 115)]
+	//[DataRow("[..#....#..] (0,4,5,7,8) (7,8) (1,3,5,6,9) (0,2,3,4,7,8,9) (1,4,6,7) (0,1,4,6,7,8,9) (3,4,7,9) (0,2,3,4,5,6,8,9) (2,5,7,9) (1,6,7,8,9) (0,2,3,5,6,7,8,9) (0,1,3,5,6,8,9) (5,8,9) {248,48,228,265,250,83,75,269,260,287}", 11)]
+	public void Day10_2_TestBothBruitforces(string input, int result)
+	{
+		var puzzle = new Day10();
+		var machine = puzzle.ParseInput([input])[0];
+		var movesDictionary = new Dictionary<int, List<List<int>>>();
+		long minScore = int.MaxValue;
+		var count = (int)puzzle.RunBoth(machine);
+		Assert.AreEqual(result, count);
 	}
 }
