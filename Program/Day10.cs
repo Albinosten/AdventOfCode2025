@@ -292,10 +292,6 @@ namespace AdventOfCode2025
 				{
 					var count = int.Parse(result);
 					Console.WriteLine($"ID: {machine.Id} result: {count}");
-					if(count == int.MaxValue)
-					{
-						
-					}
 					concurrentBag.Add(count);
 				}
 				else
@@ -323,7 +319,7 @@ namespace AdventOfCode2025
 		public long RunBruitForceRecursiveMinJoltage(Machine machine, SingleValueHolder svh, CancellationTokenSource cancellationToken)
 		{
 			var movesDictionary = new Dictionary<int, List<int[]>>();
-			int minScore = 10000;
+			int minScore = int.MaxValue;
 			return this.BruitForceRecursiveMinJoltage(machine
 			, 0
 			, 0
@@ -332,7 +328,7 @@ namespace AdventOfCode2025
 			, new List<int>()
 			, movesDictionary
 			, new Dictionary<string, int>()
-			, svh
+			, ref minScore
 			, machine.ExpectedJoltage.ToArray()
 			, cancellationToken
 			)
@@ -348,13 +344,14 @@ namespace AdventOfCode2025
 		, List<int> usedJoltages
 		, Dictionary<int, List<int[]>> movesDictionary
 		, Dictionary<string, int> previousJoltDictionary
-		, SingleValueHolder svh
+		// , SingleValueHolder svh
+		, ref int minScore
 		, int[] expectedJoltage
 		, CancellationTokenSource cancellationToken
 		)
 		{
 			cancellationToken.Token.ThrowIfCancellationRequested();
-			var minScore = svh.Get();
+			// var minScore = svh.Get();
 			if (score > minScore)
 			{
 				return score;
@@ -385,7 +382,12 @@ namespace AdventOfCode2025
 					/*sending joltage-1 here since the forloop makes sure to not overdo current joltage*/
 					/*And FilterMovesExcludePreviousJoltageMoves makes sure no previous joltages are changed*/
 					var joltageOverloaded = newM.joltageOverload(expectedJoltage, 0);
-					if (!joltageOverloaded)
+					if (!joltageOverloaded &&  Machine.FilterMovesExcludePreviousJoltagesMoves(movesDictionary
+						, originalButtons
+						, [filteredButtons.joltage , ..usedJoltages]
+						, previousJoltDictionary
+						).joltage >= 0
+						)
 					{
 						if (BruitForceRecursiveMinJoltage(newM.SoftClone(false), 0
 							, newButtonPressedForJoltage
@@ -394,7 +396,7 @@ namespace AdventOfCode2025
 							, [filteredButtons.joltage, ..usedJoltages]
 							, movesDictionary
 							, previousJoltDictionary
-							, svh
+							, ref minScore
 							, expectedJoltage
 							, cancellationToken
 							) >= minScore)
@@ -402,16 +404,15 @@ namespace AdventOfCode2025
 							break;
 						}
 					}
-					 if (newM.joltageIsComplete(expectedJoltage, expectedJoltage.Length))
+					else if (!joltageOverloaded && newM.joltageIsComplete(expectedJoltage, expectedJoltage.Length))
 					{
 						minScore = score + i;
-						svh.Set(minScore);
+						// svh.Set(minScore);
 						return minScore;
 					}
 					else { break; }
 				}
-				else
-				if (depth < filteredButtons.Item1.Count - 1)
+				else if (depth < filteredButtons.Item1.Count - 1)
 				{
 					var newM = m.SoftClone(false);
 					newM.ApplyMultipleMove(i, filteredButtons.Item1[depth]);
@@ -424,7 +425,7 @@ namespace AdventOfCode2025
 							, [..usedJoltages]
 							, movesDictionary
 							, previousJoltDictionary
-							, svh
+							, ref minScore
 							, expectedJoltage
 							, cancellationToken
 							) > minScore)
@@ -435,10 +436,9 @@ namespace AdventOfCode2025
 				else if (depth == filteredButtons.Item1.Count)
 				{
 					i = 1000;
-
 				}
 			}
-			return svh.Get();
+			return minScore;
 		}
 
 		public int SolveMachine(Machine machine)
