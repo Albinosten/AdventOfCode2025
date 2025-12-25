@@ -382,12 +382,7 @@ namespace AdventOfCode2025
 					/*sending joltage-1 here since the forloop makes sure to not overdo current joltage*/
 					/*And FilterMovesExcludePreviousJoltageMoves makes sure no previous joltages are changed*/
 					var joltageOverloaded = newM.joltageOverload(expectedJoltage, 0);
-					if (!joltageOverloaded &&  Machine.FilterMovesExcludePreviousJoltagesMoves(movesDictionary
-						, originalButtons
-						, [filteredButtons.joltage , ..usedJoltages]
-						, previousJoltDictionary
-						).joltage >= 0
-						)
+					if (!joltageOverloaded)
 					{
 						if (BruitForceRecursiveMinJoltage(newM.SoftClone(false), 0
 							, newButtonPressedForJoltage
@@ -404,7 +399,7 @@ namespace AdventOfCode2025
 							break;
 						}
 					}
-					else if (!joltageOverloaded && newM.joltageIsComplete(expectedJoltage, expectedJoltage.Length))
+					if (!joltageOverloaded && newM.joltageIsComplete(expectedJoltage, expectedJoltage.Length))
 					{
 						minScore = score + i;
 						// svh.Set(minScore);
