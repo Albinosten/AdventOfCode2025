@@ -14,7 +14,7 @@ public class Day11Tests
 
     [TestMethod]
     [DataRow(true, 2)]
-    [DataRow(false, 0)]
+    [DataRow(false, 479511112939968)]
     public void Day11_2(bool isExample, int expected)
     {
         var puzzle = new Day11();

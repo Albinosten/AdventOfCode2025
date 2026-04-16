@@ -154,9 +154,6 @@ namespace AdventOfCode2025
 		public static string GetHash(List<int> ints)
 		{
 			return string.Join(",", ints
-				// .Distinct()
-				// .OrderBy(x => x)
-				// .ToList()
 				);
 		}
 		public static (List<int[]> buttons, int joltage) FilterMovesExcludePreviousJoltagesMoves(
@@ -236,8 +233,6 @@ namespace AdventOfCode2025
 	}
 	public class Day10
 	{
-		public bool ReadSaveResult { get; set; }
-
 		public long First(IList<string> input, bool isExample)
 		{
 			var machines = this.ParseInput(input);
@@ -246,25 +241,8 @@ namespace AdventOfCode2025
 			, parallelOptions: new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1) }
 			, machine =>
 			{
-				var t = new Stopwatch();
-				t.Start();
-				var result = FileReader.GetResult(isExample, Part.One, this, machine.Id);
-				if (ReadSaveResult && !string.IsNullOrEmpty(result))
-				{
-					var count = int.Parse(result);
-					concurrentBag.Add(count);
-				}
-				else
-				{
-					var count = this.SolveMachine(machine);
-					t.Stop();
-					concurrentBag.Add(count);
-					this.PrintMachineInfoAndTime(t, machine, count);
-					if(ReadSaveResult)
-					{
-						FileReader.SaveResult(isExample, Part.One, this, machine.Id, count.ToString());
-					}
-				}
+				var count = this.SolveMachine(machine);
+				concurrentBag.Add(count);
 			});
 
 			return concurrentBag.Sum();
@@ -273,50 +251,24 @@ namespace AdventOfCode2025
 		{
 			Console.WriteLine($"Id: {machine.Id}	Took: {t.Elapsed}	Count : {result}	ButtonPair: {machine.Buttons.Count()}	Buttons: {machine.Buttons.Sum(x => x.Count)}");
 		}
+
 		public long Second(IList<string> input, bool isExample)
 		{
 			List<Machine> machines = this.ParseInput(input)
-				.ToList()
-				;
+				.ToList();
 			var concurrentBag = new ConcurrentBag<long>();
-			// machines.Reverse();
-			// foreach(var machine in machines)
 			Parallel.ForEach(machines
 			, parallelOptions: new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount) }
 			, machine =>
 			{
-				var t = new Stopwatch();
-				t.Start();
-				var result = FileReader.GetResult(isExample, Part.Two, this, machine.Id);
-				if (ReadSaveResult && !string.IsNullOrEmpty(result))
-				{
-					var count = int.Parse(result);
-					Console.WriteLine($"ID: {machine.Id} result: {count}");
-					concurrentBag.Add(count);
-				}
-				else
-				{
-					Console.WriteLine($"Started with: {machine.Id}");
-					var count = (int)this.RunBruitForceRecursiveMinJoltage(machine, new SingleValueHolder(int.MaxValue), new CancellationTokenSource());
-					t.Stop();
-					concurrentBag.Add(count);
-					this.PrintMachineInfoAndTime(t, machine, count);
-					Console.WriteLine($"Done with {concurrentBag.Count()} / {input.Count} At: {DateTime.Now}");
-					
-					Console.WriteLine("*******************");
-					if (ReadSaveResult)
-					{
-						FileReader.SaveResult(isExample, Part.Two, this, machine.Id, count.ToString());
-					}
-				}
-			}
-			);
+				var count = (int)this.RunBruitForceRecursiveMinJoltage(machine);
+				concurrentBag.Add(count);
+			});
 
 			return concurrentBag.Sum();
 		}
 
-		
-		public long RunBruitForceRecursiveMinJoltage(Machine machine, SingleValueHolder svh, CancellationTokenSource cancellationToken)
+		public long RunBruitForceRecursiveMinJoltage(Machine machine)
 		{
 			var movesDictionary = new Dictionary<int, List<int[]>>();
 			int minScore = int.MaxValue;
@@ -330,7 +282,6 @@ namespace AdventOfCode2025
 			, new Dictionary<string, int>()
 			, ref minScore
 			, machine.ExpectedJoltage.ToArray()
-			, cancellationToken
 			)
 			* machine.GCD
 			;
@@ -344,14 +295,10 @@ namespace AdventOfCode2025
 		, List<int> usedJoltages
 		, Dictionary<int, List<int[]>> movesDictionary
 		, Dictionary<string, int> previousJoltDictionary
-		// , SingleValueHolder svh
 		, ref int minScore
 		, int[] expectedJoltage
-		, CancellationTokenSource cancellationToken
 		)
 		{
-			cancellationToken.Token.ThrowIfCancellationRequested();
-			// var minScore = svh.Get();
 			if (score > minScore)
 			{
 				return score;
@@ -393,7 +340,6 @@ namespace AdventOfCode2025
 							, previousJoltDictionary
 							, ref minScore
 							, expectedJoltage
-							, cancellationToken
 							) >= minScore)
 						{
 							break;
@@ -402,7 +348,6 @@ namespace AdventOfCode2025
 					if (!joltageOverloaded && newM.joltageIsComplete(expectedJoltage, expectedJoltage.Length))
 					{
 						minScore = score + i;
-						// svh.Set(minScore);
 						return minScore;
 					}
 					else { break; }
@@ -422,7 +367,6 @@ namespace AdventOfCode2025
 							, previousJoltDictionary
 							, ref minScore
 							, expectedJoltage
-							, cancellationToken
 							) > minScore)
 					{
 						break;
@@ -515,7 +459,7 @@ namespace AdventOfCode2025
 					var savedResult = int.Parse(resultFromfile);
 					var t = new Stopwatch();
 					t.Start();
-					var newResult = this.RunBruitForceRecursiveMinJoltage(machine, new SingleValueHolder(int.MaxValue), new CancellationTokenSource());
+					var newResult = this.RunBruitForceRecursiveMinJoltage(machine);
 					
 					if (newResult != savedResult)
 					{
@@ -542,7 +486,6 @@ namespace AdventOfCode2025
 					machine.ExpectedIndicators.Add(v);
 					machine.Indicators.Add(false);//Start values
 				}
-
 
 				var buttonPairs = new string(item[indicatorString.Length..]
 					.Split('{')[0]

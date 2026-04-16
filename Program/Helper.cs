@@ -1,5 +1,6 @@
 namespace AdventOfCode2025
 {
+public enum Part{ One,Two }
 	public class SingleValueHolder
 	{
 		private int _value;

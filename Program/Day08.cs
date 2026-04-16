@@ -5,7 +5,7 @@ namespace AdventOfCode2025
        /*
         Yes, my datastructures look like monsters..
        */
-        public int First(IList<string> input, int maxNumberOfConnections)
+        public int First(IList<string> input, int maxNumberOfConnections = 1000)
         {
             var distances = this.GetDistances(this.ParseInput(input));
             var circuitHolder = new Dictionary<(int x, int y, int z), int>();
@@ -24,7 +24,7 @@ namespace AdventOfCode2025
                 .Aggregate((x,y) => x*y);
         }
 
-        public long Second(IList<string> input, int maxNumberOfConnections)
+        public long Second(IList<string> input, int maxNumberOfConnections = 1000)
         {
             var distances = this.GetDistances(this.ParseInput(input));
             var circuitHolder = new Dictionary<(int x, int y, int z), int>();

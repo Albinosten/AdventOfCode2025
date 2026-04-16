@@ -84,7 +84,7 @@ I Learned some new tricks with floodfill and data symbolization but with growing
 					if (area > maxArea && !Collition(range, ranges))
 					{
 						maxArea = area;
-						Print(ranges,coordinates.ToHashSet(),range);
+						//Print(ranges,coordinates.ToHashSet(),range);
 					}
 				}
 			}
