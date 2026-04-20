@@ -25,6 +25,26 @@ public class Day10Tests
 
 
 	[TestMethod]
+	[DataRow("[####...#.] (0,1,2,4,5,6,8) (0,2,3,5,6,8) (0,1,2,4,5,7,8) (4,5) (1,3) (0,6) (0,2,4,6,7) (0,1,2,3,4,6,7) (3,4,5,6,7,8) {188,167,170,33,181,182,49,167,172}", 214)]
+	[DataRow("[######.] (4) (0,1,2,3,4,5) (0,1,2,5,6) (0,3,4,6) (3,5) (1,2,3,4,5,6) (4,5) (1) (1,4,5,6) {41,53,34,69,81,71,55}", 95)]
+	[DataRow("[.#..] (0,1,2,3) (0,2,3) (1) {206,211,206,206}", 211)]
+	[DataRow("[.#.#......] (4,9) (0,4,5,6,7,8,9) (1,3,4,5,6,7,8,9) (5,6,9) (2,4,7,8,9) (1,3) (6,7,8) (1,2,3,5,6,8) (3,9) (2,5) (1,4,5) {13,40,34,31,72,69,70,61,74,79}", 114)]
+	public void TestTheNewMethod(string input, int count)
+	{
+		var puzzle = new Day10();
+		var result = puzzle.Second([input], false);
+
+		Assert.AreEqual(count, result);
+
+		var puzzleNew = new Day10_New();
+		var newResult = puzzleNew.SolveWithConcurrentList([input]);
+
+		Assert.AreEqual(count, newResult);
+
+
+	}
+
+	[TestMethod]
 	public void Day10_Clone()
 	{
 		var puzzle = new Day10();
@@ -59,6 +79,7 @@ public class Day10Tests
 		var puzzle = new Day10();
 		Assert.AreEqual(count, puzzle.First([input],true));
 	}
+
 	[TestMethod]
 	public void ManuallyApllyMove()
 	{

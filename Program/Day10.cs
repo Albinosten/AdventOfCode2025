@@ -31,7 +31,10 @@ namespace AdventOfCode2025
 		
 		public int[] joltage { get; }
 		public List<int> ExpectedJoltage { get; }
-
+		public bool joltageOverload(List<int> expectedJoltage, int startIndex)
+		{
+			return this.joltageOverload(expectedJoltage.ToArray(), startIndex);
+		}
 		public bool joltageOverload(int[] expectedJoltage, int startIndex)
 		{
 			for (int i = startIndex; i < expectedJoltage.Length; i++)
@@ -58,7 +61,7 @@ namespace AdventOfCode2025
 
 		public bool joltageIsComplete(List<int> expectedJoltage, int joltIndex)
 		{
-			for (int i = 0; i <= joltIndex; i++)
+			for (int i = 0; i < joltIndex; i++)
 			{
 				if (joltage[i] != expectedJoltage[i])
 				{
@@ -120,37 +123,7 @@ namespace AdventOfCode2025
 				this.joltage[buttons[i]] += count;
 			}
 		}
-		public static List<int[]> FilterMovesExcludePreviousJoltageMoves(Dictionary<int, List<int[]>> movesDictionary, List<List<int>> allButtons, int joltIndex)
-		{
-			if (movesDictionary.ContainsKey(joltIndex))
-			{
-				return movesDictionary[joltIndex];
-			}
-			var moves = allButtons
-				.Where(x => x.Any(y => y == joltIndex))
-				.Where(x => x.All(y => y >= joltIndex))
-				.OrderByDescending(x => x.Count)
-				.Select(x => x.ToArray())
-				.ToList();
-			movesDictionary.Add(joltIndex, moves);
-			return moves;
-		}
-		public static List<int[]> FilterMovesExcludePreviousJoltageMovesBackwards(Dictionary<int, List<int[]>> movesDictionary, List<List<int>> allButtons, int joltIndex)
-		{
-			if (movesDictionary.ContainsKey(joltIndex))
-			{
-				return movesDictionary[joltIndex];
-			}
-			var moves = allButtons
-				.Where(x => x.Any(y => y == joltIndex))
-				.Where(x => x.All(y => y <= joltIndex))
-				.OrderByDescending(x => x.Count)
-				.Select(x => x.ToArray())
-				.ToList();
-			movesDictionary.Add(joltIndex, moves);
-			return moves;
-		}
-
+		
 		public static string GetHash(List<int> ints)
 		{
 			return string.Join(",", ints
@@ -192,7 +165,38 @@ namespace AdventOfCode2025
 			movesDictionary.Add(joltIndex, moves);
 			nextJoltage.Add(joltHash, joltIndex);
 			return (moves,joltIndex);
-			
+		}
+		public static (List<int[]> buttons, int joltage) FilterMovesExcludePreviousJoltagesMovesThreadSafe(ConcurrentDictionary<int, List<int[]>> movesDictionary
+			, List<List<int>> allButtons
+			, List<int> usedJoltage
+			, ConcurrentDictionary<string, int> nextJoltage
+			)
+		{
+			var joltHash = GetHash(usedJoltage);
+			if (nextJoltage?.TryGetValue(joltHash, out var nj) ?? false
+				&& movesDictionary.ContainsKey(nj))
+			{
+				return (movesDictionary[nj], nj);
+			}var unusedButtons = allButtons.
+				Where(x => !x.Any(c => usedJoltage.Contains(c)))
+				.ToList();
+
+			var joltIndex = unusedButtons
+				.SelectMany(x => x)
+				.GroupBy(x => x)
+				.OrderBy(x => x.Count())
+				.FirstOrDefault()?.Key
+				?? -1
+				;
+
+			var moves = unusedButtons
+				.Where(x => x.Any(y => y == joltIndex))
+				.OrderByDescending(x => x.Count)
+				.Select(x => x.ToArray())
+				.ToList();
+			movesDictionary.TryAdd(joltIndex, moves);
+			nextJoltage?.TryAdd(joltHash, joltIndex);
+			return (moves, joltIndex);
 		}
 		public Machine Clone()
 		{

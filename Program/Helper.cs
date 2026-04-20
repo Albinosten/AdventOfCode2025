@@ -1,6 +1,32 @@
 namespace AdventOfCode2025
 {
-public enum Part{ One,Two }
+	public enum Part{ One,Two }
+	public class ParallelUtils
+	{
+		public static void SingleWhile(Func<bool> condition, Action body)
+		{
+			do
+			{
+				body();
+			}
+			while (condition());
+		}
+		public static void While(Func<bool> condition, Action body)
+		{
+			Parallel.ForEach(IterateUntilFalse(condition)
+				, new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount }
+				, ignored => body()
+				);
+		}
+
+		private static IEnumerable<bool> IterateUntilFalse(Func<bool> condition)
+		{
+			while (condition())
+			{
+				yield return true;
+			}
+		}
+	}
 	public class SingleValueHolder
 	{
 		private int _value;
@@ -11,10 +37,18 @@ public enum Part{ One,Two }
 		}
 
 		// Atomic replacement
-		public void Set(int newValue)
+		public void TryLower(int newValue)
 		{
-			var min = Math.Min(newValue, Get());
-			Interlocked.Exchange(ref _value, min);
+			int current;
+			do
+			{
+				current = Volatile.Read(ref _value);
+				if (newValue >= current)
+				{
+					return;
+				}
+			}
+			while (Interlocked.CompareExchange(ref _value, newValue, current) != current);
 		}
 
 		// Atomic read
