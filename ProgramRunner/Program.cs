@@ -1,10 +1,41 @@
 ﻿using AdventOfCode2025;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 namespace ProgramRunner
 {
 	internal class ProgramRunner
 	{
+		static async Task Main(string[] args)
+		{
+			var count = 250;
+			//PerformanceCheckOnItemPerItem(count, true);
+			//PerformanceCheckOnAll(count, false);
 
+			var time10_new = RunDay10_New();
+			Console.WriteLine($"Time took {time10_new}");
+			var puzzles = new[]
+			{
+				() => RunDay01(),
+				() => RunDay02(),
+				() => RunDay03(),
+				() => RunDay04(),
+				() => RunDay05(),
+				() => RunDay06(),
+				() => RunDay07(),
+				() => RunDay08(),
+				() => RunDay09(),
+				() => RunDay10(),
+				() => RunDay11(),
+			};
+
+			var i = 1;
+			foreach (var puzzle in puzzles)
+			{
+				//var time = puzzle();
+				//Console.WriteLine($"Time for puzzle {i} took {time}");
+				i++;
+			}
+		}
 		public static void PerformanceCheckOnAll(int count, bool shuffle = false)
 		{
 			var puzzle_old = new Day10();
@@ -77,35 +108,7 @@ namespace ProgramRunner
 			return list;
 		}
 
-		static async Task Main(string[] args)
-		{
-			var count = 500;
-			//PerformanceCheckOnItemPerItem(count, true);
-			PerformanceCheckOnAll(count, false);
 
-			var puzzles = new[]
-			{
-				() => RunDay01(),
-				() => RunDay02(),
-				() => RunDay03(),
-				() => RunDay04(),
-				() => RunDay05(),
-				() => RunDay06(),
-				() => RunDay07(),
-				() => RunDay08(),
-				() => RunDay09(),
-				() => RunDay10(),
-				() => RunDay11(),
-			};
-
-			var i = 1;
-			foreach (var puzzle in puzzles)
-			{
-				//var time = puzzle();
-				//Console.WriteLine($"Time for puzzle {i} took {time}");
-				i++;
-			}
-		}
 
 		static object GetFirstResult(object puzzle) => puzzle switch
 		{
@@ -149,7 +152,7 @@ namespace ProgramRunner
 			var secondExpected = GetSecondResult(puzzle);
 			if (!Compare(secondExpected, secondResult))
 			{
-				throw new Exception($"Wrong answer on second part. Expected {secondExpected}: Actual {secondExpected}");
+				throw new Exception($"Wrong answer on second part. Expected {secondExpected}: Actual {secondResult}");
 			}
 		}
 
@@ -289,6 +292,17 @@ namespace ProgramRunner
 			var secondResult = puzzle.Second(input, false);
 			clock.Stop();
 			ValidateResult(puzzle, firstResult, secondResult);
+			return clock.Elapsed;
+		}
+		public static TimeSpan RunDay10_New()
+		{
+			var puzzle = new Day10_New();
+			var input = FileReader.GetInput(false, new Day10());
+			var clock = new Stopwatch();
+			clock.Start();
+			var secondResult = puzzle.SolveWithConcurrentList(input);
+			clock.Stop();
+			ValidateResult(new Day10(), GetFirstResult(new Day10()), secondResult);
 			return clock.Elapsed;
 		}
 

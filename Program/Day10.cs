@@ -33,7 +33,14 @@ namespace AdventOfCode2025
 		public List<int> ExpectedJoltage { get; }
 		public bool joltageOverload(List<int> expectedJoltage, int startIndex)
 		{
-			return this.joltageOverload(expectedJoltage.ToArray(), startIndex);
+			for (int i = startIndex; i < expectedJoltage.Count; i++)
+			{
+				if (joltage[i] > expectedJoltage[i])
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 		public bool joltageOverload(int[] expectedJoltage, int startIndex)
 		{
